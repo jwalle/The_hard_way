@@ -105,7 +105,10 @@ void Database_set(struct Connection *conn, int id, const char *name, const char 
     if (addr->set)
         die("Already set, delete it first");
     addr->set = 1;
-    char *res = strncpy(addr->email, email, MAX_DATA);
+    char *res = strncpy(addr->name, name, MAX_DATA);
+    if (!res)
+        die("Name copy failed.");
+    res = strncpy(addr->email, email, MAX_DATA);
     if (!res)
         die ("Email copy failed");
 }
@@ -139,6 +142,27 @@ void Database_list(struct Connection *conn)
     }
 }
 
+void Database_find(struct Connection *conn, const char *find)
+{
+    int i = 0;
+    struct Database *db = conn->db;
+    
+    while (i++ < MAX_ROWS)
+    {
+        struct Address *cur = &db->rows[i];
+        if (!strcmp(cur->name, find))
+            Address_print(cur);
+    }
+}
+
+void Database_add_info(struct Connection *conn, int id, const char *what, const char *new)
+{
+    struct Address *cur = &conn->db->rows[id];
+    if (!strcmp(what, "email"))
+        strncpy(cur->email, new, MAX_DATA);
+    if (!strcmp(what, "name"))
+            strncpy(cur->name, new, MAX_DATA);
+}
 int main(int ac, char **av)
 {
     if (ac < 3)
@@ -183,6 +207,14 @@ int main(int ac, char **av)
         
         case 'l':
             Database_list(conn);
+            break;
+            
+        case 'f':
+            Database_find(conn, av[3]);
+            break;
+            
+        case 'n':
+            Database_add_info(conn, id, av[4], av[5]);
             break;
             
         default:
